@@ -8,10 +8,10 @@ Creating above infrastructure involves lot of steps, as maintained sequence we n
 * Bastion Host, VPN
 * EKS
 * RDS
-* Cloud front
-* Ingress controller
-
-
+* ACM for ingress
+* ALB as ingress controller
+* ECR repo to host images
+* CDN
 
 ## Sequence
 
@@ -71,6 +71,18 @@ curl -o iam-policy.json https://raw.githubusercontent.com/kubernetes-sigs aws-lo
 aws iam create-policy --policy-name AWSLoadBalancerControllerIAMPolicy --policy-document file://iam-policy.json
 ```
 
+* Create a IAM role and ServiceAccount for the AWS Load Balancer controller, use the ARN from the step above
+
+```
+eksctl create iamserviceaccount \
+--cluster=<cluster-name> \
+--namespace=kube-system \
+--name=aws-load-balancer-controller \
+--attach-policy-arn=arn:aws:iam::<AWS_ACCOUNT_ID>:policy/AWSLoadBalancerControllerIAMPolicy \
+--override-existing-serviceaccounts \
+--approve
+```
+
 * Add the EKS chart repo to Helm
 ```
 helm repo add eks https://aws.github.io/eks-charts
@@ -86,3 +98,6 @@ helm install aws-load-balancer-controller eks/aws-load-balancer-controller -n ku
 ```
 kubectl get pods -n kube-system
 ```
+
+
+
